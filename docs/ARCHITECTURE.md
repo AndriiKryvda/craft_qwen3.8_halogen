@@ -33,7 +33,7 @@ src/
     input.ts               keyboard/mouse state, pointer lock, key bindings, edge detection
     time.ts                world clock (ticks), daylight factor, day counter
     debug.ts               F3 overlay data (fps, ms, xyz, chunk, biome, block counts)
-    audio.ts               WebAudio blips: break, place, step, hurt, craft, ambient bed
+    audio.ts               WebAudio blips: break, place, step, punch, hurt, craft, ambient bed
     events.ts              tiny typed pub/sub used to decouple subsystems
 
   world/
@@ -54,7 +54,8 @@ src/
     atlas.ts               builds the 128x128 texture atlas canvas + UV lookup
     mesher.ts              chunk -> {opaque, transparent} vertex/index arrays + AO + light
     chunkRenderer.ts       THREE.Mesh pool per chunk, rebuild queue, frustum + fog
-    highlight.ts           block wireframe + mining-crack overlay
+    highlight.ts           block wireframe + mining-crack overlay + punch flinch
+    viewmodel.ts           first-person arm + held item, own scene/camera overlay pass
     sky.ts                 sky dome, sun/moon, fog colour from time of day
 
   player/
@@ -63,6 +64,7 @@ src/
     collision.ts           AABB vs voxel grid helpers, entity box intersection test
     raycast.ts             Amanatides-Woo DDA returning hit voxel + face normal
     controls.ts            FPS input -> wish direction, jump/sprint/sneak/fly/swim
+    swing.ts               first-person punch cadence: how often the fist connects
 
   inventory/
     item.ts                ItemDef registry (block items, materials, food, tools)

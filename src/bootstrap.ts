@@ -13,9 +13,12 @@ import { HURTS, SOLID } from './world/blocks';
 import { ChunkRenderer } from './mesh/chunkRenderer';
 import { Sky } from './mesh/sky';
 import { SelectionBox } from './mesh/highlight';
+import { HandViewModel } from './mesh/viewmodel';
 import { Player } from './player/player';
 import { PlayerControls } from './player/controls';
 import { BlockActions } from './player/mining';
+import type { RayHit } from './player/raycast';
+import { SwingClock, swingPeriod } from './player/swing';
 import { Inventory } from './inventory/inventory';
 import { SurvivalStats, type DamageCause } from './survival/stats';
 import { DropManager } from './world/drops';
@@ -24,7 +27,7 @@ import { GrowthSystem } from './world/growth';
 import { findSpawn } from './world/worldgen';
 import { MobManager } from './mobs/spawner';
 import { tickFurnace } from './inventory/furnace';
-import type { ItemStack } from './inventory/item';
+import { getItem, type ItemStack } from './inventory/item';
 import { Hud } from './ui/hud';
 import { Panels } from './ui/panels';
 import { CursorStack } from './ui/slots';
@@ -63,6 +66,7 @@ export class Game {
   readonly chunks: ChunkRenderer;
   readonly sky: Sky;
   readonly selection: SelectionBox;
+  readonly hand: HandViewModel;
   readonly player: Player;
   readonly controls: PlayerControls;
   readonly input: Input;
@@ -96,6 +100,8 @@ export class Game {
   private autosave = CONFIG.autosaveInterval;
   private envTimer = 0;
   private saving = false;
+  /** First-person punch animation clock — view only, advanced once per frame. */
+  private readonly swing = new SwingClock();
 
   constructor(opts: GameOptions) {
     this.opts = opts;
@@ -129,6 +135,7 @@ export class Game {
     this.chunks = new ChunkRenderer(this.scene, this.world);
     this.sky = new Sky(this.scene);
     this.selection = new SelectionBox(this.scene);
+    this.hand = new HandViewModel(this.renderer, window.innerWidth, window.innerHeight);
     this.drops = new DropManager(this.scene, this.world);
     this.gravity = new GravitySystem(this.world);
     this.growth = new GrowthSystem(this.world);
@@ -191,7 +198,7 @@ export class Game {
       maxFrame: 0.25,
       maxSteps: 5,
       sim: (dt) => this.sim(dt),
-      render: (alpha) => this.render(alpha)
+      render: (alpha, dt) => this.render(alpha, dt)
     });
 
     this.deathEl = this.buildDeathOverlay();
@@ -246,6 +253,7 @@ export class Game {
     this.chunks.dispose();
     this.sky.dispose(this.scene);
     this.selection.dispose(this.scene);
+    this.hand.dispose();
     this.hud.dispose();
     this.panels.close();
     this.pause.closeMenu();
@@ -277,6 +285,7 @@ export class Game {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
+    this.hand.resize(w, h);
   };
 
   private onBeforeUnload = (): void => {
@@ -315,6 +324,7 @@ export class Game {
     this.panels.close();
     this.paused = true;
     this.player.mining = null;
+    this.swing.reset();
     this.input.releaseLock();
     this.pause.openMenu();
     this.syncUiMode();
@@ -618,7 +628,10 @@ export class Game {
       this.mining.target = null;
     } else {
       this.mining.update(dt, i.lmb);
-      if (i.rmbPressed) this.mining.interact();
+      if (i.rmbPressed) {
+        this.mining.interact();
+        this.swing.trigger();
+      }
       if (i.wasPressed('KeyQ')) this.mining.dropHeld(i.isDown('sneak'));
     }
 
@@ -677,7 +690,37 @@ export class Game {
     } else this.suffocate = 0;
   }
 
-  private render(alpha: number): void {
+  /**
+   * Punch animation: while the left button is down on a block the arm swings
+   * over and over, and every punch that lands thuds, dents the block and flashes
+   * the cracks. Purely cosmetic — the mining progress itself lives in the sim.
+   */
+  private updateHand(dt: number, hit: RayHit | null, daylight: number): void {
+    const p = this.player;
+    const ui = this.panels.open || this.pause.open || this.dead || this.paused;
+    this.hand.visible = !ui;
+
+    const held = this.inventory.held();
+    const def = held ? getItem(held.id) : undefined;
+    this.hand.setHeld(def ? def.icon : -1, def ? def.block >= 0 : false);
+
+    const punching = !ui && !!hit && this.input.lmb;
+    const landed = this.swing.update(dt, punching, swingPeriod(this.inventory.heldTool(), p.creative));
+    if (landed) {
+      this.audio.play('punch');
+      if (hit) this.selection.punch();
+    }
+
+    this.hand.update(dt, {
+      extension: this.swing.extension,
+      bob: p.bob,
+      moving: Math.abs(p.vx) + Math.abs(p.vz) > 0.6,
+      daylight,
+      sneak: p.sneaking
+    });
+  }
+
+  private render(alpha: number, dt: number): void {
     const p = this.player;
     const a = alpha < 0 ? 0 : alpha > 1 ? 1 : alpha;
     const bob = p.onGround ? Math.sin(p.bob) * 0.045 : 0;
@@ -706,6 +749,8 @@ export class Game {
       const progress = mine && mine.total > 0 ? Math.min(1, mine.progress / mine.total) : 0;
       this.selection.show(hit.x, hit.y, hit.z, progress);
     } else this.selection.hide();
+    this.selection.tick(dt);
+    this.updateHand(dt, hit, palette.daylight);
 
     this.chunks.countStats(this.camera);
     this.hud.setWater(p.headInWater);
@@ -729,6 +774,7 @@ export class Game {
     }
 
     this.renderer.render(this.scene, this.camera);
+    this.hand.render();
   }
 }
 

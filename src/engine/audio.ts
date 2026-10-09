@@ -1,6 +1,6 @@
 /** Procedural sound effects (no audio files). */
 
-export type SoundKind = 'break' | 'place' | 'step' | 'hurt' | 'craft' | 'eat' | 'hit' | 'death';
+export type SoundKind = 'break' | 'place' | 'step' | 'hurt' | 'craft' | 'eat' | 'hit' | 'death' | 'punch';
 
 export class Audio {
   private ctx: AudioContext | null = null;
@@ -77,6 +77,12 @@ export class Audio {
         break;
       case 'step':
         this.noise(0.07, 420, 0.14);
+        break;
+      case 'punch':
+        // Hand on a block: a short thud, slightly detuned so a run of
+        // punches never sounds like a loop.
+        this.noise(0.05, 620 + Math.random() * 300, 0.13);
+        this.tone(140 + Math.random() * 40, 0.06, 0.05, 'triangle', -50);
         break;
       case 'hurt':
         this.tone(300, 0.22, 0.25, 'sawtooth', -180);

@@ -8,7 +8,11 @@ export interface LoopOptions {
   /** Maximum simulation steps per frame (prevents the spiral of death). */
   maxSteps?: number;
   sim(dt: number): void;
-  render(alpha: number): void;
+  /**
+   * Called once per rendered frame. `alpha` interpolates the fixed sim steps;
+   * `dt` is the real frame time, for view-only animation (arm swing, ...).
+   */
+  render(alpha: number, dt: number): void;
 }
 
 export class GameLoop {
@@ -61,7 +65,7 @@ export class GameLoop {
     }
     if (steps === this.maxSteps) this.acc = 0;
 
-    this.opts.render(this.acc / this.opts.simStep);
+    this.opts.render(this.acc / this.opts.simStep, dt);
 
     this.frames++;
     this.fpsAcc += dt;
