@@ -36,8 +36,12 @@ export class Hud {
 
   constructor(root: HTMLElement, private readonly inventory: Inventory) {
     this.root = root;
+    // This Hud instance owns the HUD containers; drop anything a previous game
+    // instance left behind so restarting a world cannot double the hotbar.
+    const hotbarEl = document.getElementById('hotbar')!;
+    hotbarEl.replaceChildren();
     this.hotbarGrid = new SlotGrid(
-      document.getElementById('hotbar')!,
+      hotbarEl,
       HOTBAR_SIZE,
       (i): SlotAccessor => ({
         get: () => inventory.slots[i],
@@ -46,12 +50,15 @@ export class Hud {
           this.refreshHotbar();
         }
       }),
-      { className: 'hotbar' }
+      { className: 'hotbar', columns: HOTBAR_SIZE }
     );
 
     this.healthRow = document.getElementById('health')!;
     this.hungerRow = document.getElementById('hunger')!;
     this.airRow = document.getElementById('air')!;
+    this.healthRow.replaceChildren();
+    this.hungerRow.replaceChildren();
+    this.airRow.replaceChildren();
     this.clockEl = document.getElementById('clock')!;
     this.debugEl = document.getElementById('debug')!;
     this.toastEl = document.getElementById('toasts')!;
@@ -144,5 +151,18 @@ export class Hud {
 
   hide(): void {
     this.root.classList.add('hidden');
+  }
+
+  /** Remove every DOM node this Hud added so a new game starts from a clean HUD. */
+  dispose(): void {
+    this.hide();
+    this.hotbarGrid.el.remove();
+    this.healthRow.replaceChildren();
+    this.hungerRow.replaceChildren();
+    this.airRow.replaceChildren();
+    this.toastEl.replaceChildren();
+    this.debugEl.textContent = '';
+    this.vignette.style.opacity = '0';
+    this.waterOverlay.classList.remove('on');
   }
 }

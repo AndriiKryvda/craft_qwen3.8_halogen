@@ -66,14 +66,12 @@ body {
   mix-blend-mode: difference;
 }
 
+/* Wrapper only: the inner .slot-grid.hotbar lays the 9 slots out in one row. */
 #hotbar {
   position: absolute;
   left: 50%;
   bottom: 12px;
   transform: translateX(-50%);
-  display: grid;
-  grid-template-columns: repeat(9, var(--slot));
-  gap: 3px;
   padding: 4px;
   background: var(--hud-dark);
   border: 2px solid #1f1f1f;
@@ -324,8 +322,10 @@ body {
   gap: 8px;
 }
 
+/* --cols is set by SlotGrid (columns option); single-slot grids default to 1. */
 .slot-grid {
   display: grid;
+  grid-template-columns: repeat(var(--cols, 1), var(--slot));
   gap: 3px;
 }
 

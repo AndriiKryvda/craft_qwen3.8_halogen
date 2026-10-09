@@ -246,7 +246,7 @@ export class Game {
     this.chunks.dispose();
     this.sky.dispose(this.scene);
     this.selection.dispose(this.scene);
-    this.hud.hide();
+    this.hud.dispose();
     this.panels.close();
     this.pause.closeMenu();
     this.deathEl.classList.add('hidden');
