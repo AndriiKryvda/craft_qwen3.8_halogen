@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>Halogen Craft</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%237c9c4e'/%3E%3Crect y='8' width='16' height='8' fill='%238a6a44'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/src/ui/styles.css" />
+  </head>
+  <body>
+    <div id="game"></div>
+
+    <!-- Heads-up display -->
+    <div id="hud" class="hidden">
+      <div id="crosshair"></div>
+      <div id="debug" class="hidden"></div>
+      <div id="clock"></div>
+      <div id="stats">
+        <div id="air"></div>
+        <div id="health"></div>
+        <div id="hunger"></div>
+      </div>
+      <div id="hotbar"></div>
+      <div id="toasts"></div>
+      <div id="damage-vignette"></div>
+      <div id="water-overlay"></div>
+      <div id="touch" class="hidden">
+        <button class="up" data-touch="up">▲</button>
+        <button class="down" data-touch="down">▼</button>
+        <button class="left" data-touch="left">◀</button>
+        <button class="right" data-touch="right">▶</button>
+        <button class="jump" data-touch="jump">⤒</button>
+        <button class="mine" data-touch="mine">⛏</button>
+        <button class="place" data-touch="place">▣</button>
+      </div>
+    </div>
+
+    <!-- Container panel (inventory / crafting / furnace / chest) -->
+    <div id="panel" class="hidden">
+      <div class="panel-head">
+        <span id="panel-title">Inventory</span>
+        <button id="panel-close" type="button">✕</button>
+      </div>
+      <div class="panel-body"></div>
+    </div>
+
+    <div id="pause" class="hidden"></div>
+    <div id="title"></div>
+    <div id="fatal" class="hidden"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
